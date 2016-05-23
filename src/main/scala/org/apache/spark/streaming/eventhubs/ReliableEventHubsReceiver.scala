@@ -18,13 +18,13 @@ package org.apache.spark.streaming.eventhubs
 
 import java.util.concurrent.ConcurrentHashMap
 import com.microsoft.eventhubs.client.EventHubMessage
-import org.apache.spark.{SparkEnv, Logging}
+import org.apache.spark.{SparkEnv}
 import org.apache.spark.storage.{StreamBlockId, StorageLevel}
-import org.apache.spark.streaming.receiver.{BlockGenerator, BlockGeneratorListener, Receiver}
-import org.apache.spark.util.Utils
+import org.apache.spark.streaming.receiver.{BlockGenerator, BlockGeneratorListener}
 
 import scala.collection.{mutable, Map}
-import scala.util.control.ControlThrowable
+
+
 
 /**
  * ReliableEventHubsReceiver offers the ability to reliably store data into BlockManager without

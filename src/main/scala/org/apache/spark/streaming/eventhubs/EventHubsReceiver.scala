@@ -16,17 +16,14 @@
  */
 package org.apache.spark.streaming.eventhubs
 
-import org.apache.spark.storage.StorageLevel
-
-import scala.collection.Map
-import org.apache.spark.Logging
-import org.apache.spark.streaming.receiver.Receiver
 import com.microsoft.eventhubs.client.EventHubMessage
-
-import scala.util.control.ControlThrowable
+import org.apache.spark.Logging
+import org.apache.spark.storage.StorageLevel
+import org.apache.spark.streaming.receiver.Receiver
 import org.apache.spark.util.ThreadUtils
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.Map
+import scala.util.control.ControlThrowable
 
 // Spark 1.6
 
