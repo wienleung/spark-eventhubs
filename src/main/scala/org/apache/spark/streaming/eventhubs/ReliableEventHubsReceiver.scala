@@ -37,13 +37,14 @@ import scala.util.control.ControlThrowable
  * problem of EventHubsReceiver can be eliminated.
  */
 private[eventhubs]
-class ReliableEventHubsReceiver(
+class ReliableEventHubsReceiver[T](
     eventhubsParams: Map[String, String],
     partitionId: String,
+    processEventMessage: (Array[Byte]) => Array[T],
     storageLevel: StorageLevel,
     offsetStore: OffsetStore,
     receiverClient: EventHubsClientWrapper
-    ) extends EventHubsReceiver(eventhubsParams, partitionId, storageLevel, offsetStore,
+    ) extends EventHubsReceiver[T](eventhubsParams, partitionId, processEventMessage, storageLevel, offsetStore,
       receiverClient) {
 
   /** Use block generator to generate blocks to Spark block manager synchronously */
@@ -93,7 +94,7 @@ class ReliableEventHubsReceiver(
     var exception: Exception = null
     while (!pushed && count <= 3) {
       try {
-        store(arrayBuffer.asInstanceOf[mutable.ArrayBuffer[Array[Byte]]])
+        store(arrayBuffer.asInstanceOf[mutable.ArrayBuffer[Array[Byte]]].flatMap((x) => processEventMessage(x)))
         pushed = true
       } catch {
         case ex: Exception =>

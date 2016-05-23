@@ -21,7 +21,9 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.dstream.ReceiverInputDStream
 import org.apache.spark.streaming.receiver.Receiver
+
 import scala.collection.Map
+import scala.reflect.ClassTag
 
 object EventHubsUtils {
   /**
@@ -52,9 +54,18 @@ object EventHubsUtils {
       eventhubsParams: Map[String, String],
       storageLevel: StorageLevel = StorageLevel.MEMORY_ONLY
     ): DStream[Array[Byte]] = {
+    createUnionStream(ssc, eventhubsParams, (x) => Array(x), storageLevel)
+  }
+
+  def createUnionStream[T:ClassTag] (
+      ssc: StreamingContext,
+      eventhubsParams: Map[String, String],
+      processEventMessage: (Array[Byte]) => Array[T],
+      storageLevel: StorageLevel = StorageLevel.MEMORY_ONLY
+    ): DStream[T] = {
     val partitionCount = eventhubsParams("eventhubs.partition.count").toInt
     val streams = (0 to partitionCount-1).map{
-      i => createStream(ssc,eventhubsParams, i.toString, storageLevel)}
+      i => createStream[T](ssc,eventhubsParams, i.toString, processEventMessage, storageLevel)}
     ssc.union(streams)
   }
 
@@ -70,7 +81,7 @@ object EventHubsUtils {
    * @param receiverClient the EventHubs client implementation, defaults to EventHubsClientWrapper
    * @return ReceiverInputStream
    */
-  def createStream (
+  def createStream(
     ssc: StreamingContext,
     eventhubsParams: Map[String, String],
     partitionId: String,
@@ -78,7 +89,19 @@ object EventHubsUtils {
     offsetStore: OffsetStore = null,
     receiverClient: EventHubsClientWrapper = new EventHubsClientWrapper
   ): ReceiverInputDStream[Array[Byte]] = {
-    ssc.receiverStream(getReceiver(ssc, eventhubsParams, partitionId, storageLevel, offsetStore,
+    createStream(ssc, eventhubsParams, partitionId, (x) => Array(x), storageLevel, offsetStore, receiverClient)
+  }
+
+  def createStream[T:ClassTag](
+      ssc: StreamingContext,
+      eventhubsParams: Map[String, String],
+      partitionId: String,
+      processEventMessage: (Array[Byte]) => Array[T],
+      storageLevel: StorageLevel = StorageLevel.MEMORY_ONLY,
+      offsetStore: OffsetStore = null,
+      receiverClient: EventHubsClientWrapper = new EventHubsClientWrapper
+    ): ReceiverInputDStream[T] = {
+    ssc.receiverStream(getReceiver(ssc, eventhubsParams, partitionId, processEventMessage, storageLevel, offsetStore,
       receiverClient))
   }
 
@@ -86,20 +109,21 @@ object EventHubsUtils {
    * A helper function to get EventHubsReceiver or ReliableEventHubsReceiver based on whether
    * Write Ahead Log is enabled or not ("spark.streaming.receiver.writeAheadLog.enable")
    */
-  private def getReceiver(
+  private def getReceiver[T:ClassTag](
     ssc: StreamingContext,
     eventhubsParams: Map[String, String],
     partitionId: String,
+    processEventMessage: (Array[Byte]) => Array[T],
     storageLevel: StorageLevel,
     offsetStore: OffsetStore,
-    receiverClient: EventHubsClientWrapper): Receiver[Array[Byte]] = {
+    receiverClient: EventHubsClientWrapper): Receiver[T] = {
     val walEnabled = ssc.conf.getBoolean("spark.streaming.receiver.writeAheadLog.enable", false)
     if (walEnabled) {
-      new ReliableEventHubsReceiver(eventhubsParams, partitionId, storageLevel, offsetStore,
+      new ReliableEventHubsReceiver(eventhubsParams, partitionId, processEventMessage, storageLevel, offsetStore,
         receiverClient)
     }
     else {
-      new EventHubsReceiver(eventhubsParams, partitionId, storageLevel, offsetStore,
+      new EventHubsReceiver(eventhubsParams, partitionId, processEventMessage, storageLevel, offsetStore,
         receiverClient)
     }
   }

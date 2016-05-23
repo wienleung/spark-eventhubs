@@ -17,24 +17,28 @@
 package org.apache.spark.streaming.eventhubs
 
 import org.apache.spark.storage.StorageLevel
+
 import scala.collection.Map
 import org.apache.spark.Logging
 import org.apache.spark.streaming.receiver.Receiver
 import com.microsoft.eventhubs.client.EventHubMessage
-import scala.util.control.ControlThrowable
 
+import scala.util.control.ControlThrowable
 import org.apache.spark.util.ThreadUtils
+
+import scala.collection.mutable.ArrayBuffer
 
 // Spark 1.6
 
 private[eventhubs]
-class EventHubsReceiver(
+class EventHubsReceiver[T](
     eventhubsParams: Map[String, String],
     partitionId: String,
+    processEventMessage: (Array[Byte]) => Array[T],
     storageLevel: StorageLevel,
     offsetStore: OffsetStore,
     receiverClient: EventHubsClientWrapper
-    ) extends Receiver[Array[Byte]](storageLevel) with Logging {
+    ) extends Receiver[T](storageLevel) with Logging {
 
   /** If offset store is empty we construct one using provided parameters */
   var myOffsetStore: OffsetStore = offsetStore
@@ -86,7 +90,7 @@ class EventHubsReceiver(
 
   def processReceivedMessage(message: EventHubMessage): Unit = {
     // Just store the message to Spark and update offsetToSave
-    store(message.getData)
+    store(processEventMessage(message.getData).iterator)
     offsetToSave = message.getOffset
   }
 

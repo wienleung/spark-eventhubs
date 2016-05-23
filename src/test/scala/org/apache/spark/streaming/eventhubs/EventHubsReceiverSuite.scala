@@ -73,7 +73,7 @@ with MockitoSugar {
     when(ehClientWrapperMock.receive())
       .thenReturn(new EventHubMessage("123", 456, 789, data))
       .thenReturn(null)
-    val receiver = new EventHubsReceiver(ehParams2, "0", StorageLevel.MEMORY_ONLY,
+    val receiver = new EventHubsReceiver(ehParams2, "0", (x) => Array(x), StorageLevel.MEMORY_ONLY,
       offsetStoreMock, ehClientWrapperMock)
     receiver.attachSupervisor(executorMock)
 
@@ -99,7 +99,7 @@ with MockitoSugar {
       .thenReturn(new EventHubMessage("123", 456, 789, data)) // return message "123"
       .thenThrow(exception) // then throw
 
-    val receiver = new EventHubsReceiver(ehParams, "0", StorageLevel.MEMORY_ONLY,
+    val receiver = new EventHubsReceiver(ehParams, "0", (x) => Array(x), StorageLevel.MEMORY_ONLY,
       offsetStoreMock, ehClientWrapperMock)
     receiver.attachSupervisor(executorMock)
 
