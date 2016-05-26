@@ -32,6 +32,11 @@
         <updatePolicy>always</updatePolicy>
       </snapshots>
     </repository>
+    <repository>
+      <id>in-project</id>
+      <name>In Project Repo</name>
+      <url>file://${project.basedir}/libs</url>
+    </repository>
   </repositories>
   <properties>
     <sbt.project.name>spark-streaming-eventhubs</sbt.project.name>
@@ -62,7 +67,40 @@
           <groupId>ch.qos.logback</groupId>
           <artifactId>logback-classic</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>org.apache.qpid</groupId>
+          <artifactId>qpid-amqp-1-0-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.qpid</groupId>
+          <artifactId>qpid-amqp-1-0-client-jms</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.qpid</groupId>
+          <artifactId>qpid-amqp-1-0-common</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>qpid-amqp-1-0-client</artifactId>
+      <version>0.32</version>
+      <scope>system</scope>
+      <systemPath>${basedir}\libs\qpidfork\qpid-amqp-1-0-client-0.32.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>qpid-amqp-1-0-client-jms</artifactId>
+      <version>0.32</version>
+      <scope>system</scope>
+      <systemPath>${basedir}\libs\qpidfork\qpid-amqp-1-0-client-jms-0.32.jar</systemPath>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.qpid</groupId>
+      <artifactId>qpid-amqp-1-0-common</artifactId>
+      <version>0.32</version>
+      <scope>system</scope>
+      <systemPath>${basedir}\libs\qpidfork\qpid-amqp-1-0-common-0.32.jar</systemPath>
     </dependency>
     <!--dependency>
       <groupId>com.microsoft.azure</groupId>
